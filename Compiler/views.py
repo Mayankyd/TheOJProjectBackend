@@ -13,11 +13,13 @@ from rest_framework import status
 from .models import Problem, TestCase
 from .serializers import ProblemSerializer
 
+
 @api_view(['GET'])
 def problem_list(request):
     problems = Problem.objects.all()
     serializer = ProblemSerializer(problems, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def submit(request):
@@ -28,22 +30,30 @@ def submit(request):
         problem_id = data.get("problem_id")
         mode = data.get("mode")
 
+        # Validation
         if not all([language, code, problem_id, mode]):
             return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
 
         test_cases = TestCase.objects.filter(problem_id=problem_id)
+
         if not test_cases.exists():
             return Response({"error": "No test cases found for this problem"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Use only first test case if in "run" mode
+        # Mode-based filtering
         if mode == "run":
-            test_cases = [test_cases.first()]
+            test_cases = test_cases[:1]  # Only first test case
+        elif mode == "submit":
+            test_cases = test_cases      # All test cases
+        else:
+            return Response({"error": "Invalid mode. Use 'run' or 'submit'."}, status=status.HTTP_400_BAD_REQUEST)
 
-        results = run_code(language, code, problem_id, test_cases)
+        # Execute
+        results = run_code(language, code, test_cases)
         return Response(results)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 from django.http import JsonResponse
 
@@ -51,8 +61,7 @@ def test_submit(request):
     return JsonResponse({'message': 'Compiler API is working!'})
 
 
-
-def run_code(language, code, problem_id, test_cases):
+def run_code(language, code, test_cases):
     from pathlib import Path
     import subprocess
     import uuid
@@ -75,18 +84,17 @@ def run_code(language, code, problem_id, test_cases):
     code_file_name = f"{unique}.{language}"
     code_file_path = codes_dir / code_file_name
 
-    # Write the code
     with open(code_file_path, "w") as code_file:
         code_file.write(code)
 
     results = []
 
-    for test in test_cases:
+    for idx, test in enumerate(test_cases):  # 🛠 Enumerate to separate file per test
         input_data = test.input_data.strip() + '\n'
         expected_output = test.expected_output.strip()
 
-        input_file_name = f"{unique}_input.txt"
-        output_file_name = f"{unique}_output.txt"
+        input_file_name = f"{unique}_input_{idx}.txt"
+        output_file_name = f"{unique}_output_{idx}.txt"
 
         input_file_path = inputs_dir / input_file_name
         output_file_path = outputs_dir / output_file_name
@@ -154,11 +162,9 @@ def run_code(language, code, problem_id, test_cases):
         except subprocess.CalledProcessError as e:
             return {'status': 'Runtime Error', 'error': e.stderr.decode()}
 
-        # Read output
         with open(output_file_path, "r") as output_file:
             actual_output = output_file.read().strip()
 
-        # Compare output
         if actual_output == expected_output:
             results.append({
                 'input': test.input_data,
