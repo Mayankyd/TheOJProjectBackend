@@ -21,5 +21,7 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('login.urls')),  # your Django API
-    re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),  # Catch all for React
+    path('compiler/', include('Compiler.urls')),
+    re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
+    # Catch all for React
 ]

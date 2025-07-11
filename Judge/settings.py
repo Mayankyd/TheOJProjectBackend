@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'login',
     'rest_framework.authtoken',
     'corsheaders',
+    'Compiler',
 ]
 
 MIDDLEWARE = [
@@ -62,7 +63,8 @@ ROOT_URLCONF = 'Judge.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR.parent, 'frontend', 'dist')],
+        'DIRS': [os.path.join(BASE_DIR.parent, 'frontend', 'dist'),os.path.join(BASE_DIR, 'Compiler', 'templates'),],
+        
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

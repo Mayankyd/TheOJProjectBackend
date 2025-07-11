@@ -1,0 +1,114 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Code Compiler</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .compiler-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            width: 700px;
+            max-width: 90%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+        }
+
+        select, textarea, button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="compiler-container">
+        <h1>Code Compiler</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.language.label_tag }} {{ form.language }}
+            
+            <label for="id_code">Code:</label>
+            <textarea id="id_code" name="code" rows="10" required></textarea>
+            
+            <label for="id_input_data">Input data:</label>
+            <textarea id="id_input_data" name="input_data" rows="5"></textarea>
+            
+            <button type="submit">Run Code</button>
+        </form>
+    </div>
+
+    <script>
+        // Boilerplate code for each language
+        const boilerplates = {
+            "py": `print("Hello, World!")`,
+            "cpp": `#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, World!" << endl;
+    return 0;
+}`,
+            "java": `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}`
+        };
+
+        // Elements
+        const languageSelect = document.getElementById('id_language');
+        const codeTextarea = document.getElementById('id_code');
+
+        // Change event: Load boilerplate code
+        languageSelect.addEventListener('change', function() {
+            const selectedLanguage = this.value;
+            codeTextarea.value = boilerplates[selectedLanguage] || '';
+        });
+
+        // Load boilerplate on page load
+        window.addEventListener('load', function() {
+            const selectedLanguage = languageSelect.value;
+            codeTextarea.value = boilerplates[selectedLanguage] || '';
+        });
+    </script>
+</body>
+</html>
