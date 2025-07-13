@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -88,7 +90,6 @@ REST_FRAMEWORK = {
 }
 CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
 WSGI_APPLICATION = 'Judge.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
