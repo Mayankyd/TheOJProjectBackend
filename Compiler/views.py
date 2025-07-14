@@ -5,22 +5,19 @@ import os
 import uuid
 import subprocess
 from pathlib import Path
+import re
+import requests
+from dotenv import load_dotenv
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Problem, TestCase
 from .serializers import ProblemSerializer
-import re
-import os
-import requests
-from dotenv import load_dotenv
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt 
 
 # Load environment variables
 load_dotenv()
-
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 @api_view(['GET'])
@@ -53,6 +50,8 @@ def submit(request):
             return Response({"error": "Invalid mode. Use 'run' or 'submit'."}, status=status.HTTP_400_BAD_REQUEST)
 
         results = run_code(language, code, test_cases)
+        results['code'] = code  # send code in response if failed
+        results['problem_id'] = problem_id
         return Response(results)
 
     except Exception as e:
@@ -94,7 +93,6 @@ def ai_syntax_suggest(request):
         result = response.json()
         raw_suggestion = result["candidates"][0]["content"]["parts"][0]["text"].strip()
 
-        # ✅ Clean out markdown-style ``` wrappers
         suggestion = re.sub(r"```[a-z]*", "", raw_suggestion)
         suggestion = suggestion.replace("```", "").strip()
 
@@ -105,6 +103,60 @@ def ai_syntax_suggest(request):
         traceback.print_exc()
         return Response({"error": str(e)}, status=500)
 
+@csrf_exempt
+@api_view(['POST'])
+def ai_hint(request):
+    try:
+        code = request.data.get("code", "").strip()
+        problem_id = request.data.get("problem_id")
+
+        if not code or not problem_id:
+            return Response({"hint": None, "error": "Missing code or problem_id"}, status=400)
+
+        # Optional: Fetch problem text from DB if needed
+        # For now, prompt without that:
+        prompt = f"""A user has written the following code which is incorrect. Give a helpful hint (not full solution) to improve it.
+        
+Problem ID: {problem_id}
+User Code:
+{code}
+
+Respond with only one clear hint.
+"""
+
+        endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+        headers = {
+            "Content-Type": "application/json",
+            "X-goog-api-key": GEMINI_API_KEY
+        }
+        data = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": prompt
+                        }
+                    ]
+                }
+            ]
+        }
+
+        response = requests.post(endpoint, headers=headers, json=data)
+        if response.status_code != 200:
+            return Response({"hint": None, "error": response.json()}, status=response.status_code)
+
+        result = response.json()
+        raw_hint = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+        # Remove markdown or code formatting if present
+        cleaned_hint = re.sub(r"```[a-z]*", "", raw_hint).replace("```", "").strip()
+
+        return Response({"hint": cleaned_hint}, status=200)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response({"hint": None, "error": str(e)}, status=500)
 
 
 def test_submit(request):
@@ -200,8 +252,14 @@ def run_code(language, code, test_cases):
             'status': 'Passed' if actual_output == expected_output else 'Failed'
         })
 
+    # ✅ Moved outside the loop
     all_passed = all(r["status"] == "Passed" for r in results)
+    final_status = 'Accepted' if all_passed else 'Wrong Answer'
+
     return {
-        'status': 'Accepted' if all_passed else 'Wrong Answer',
-        'details': results
+        'status': final_status,
+        'details': results,
+        'wrong_code': code if final_status == "Wrong Answer" else None
     }
+
+
