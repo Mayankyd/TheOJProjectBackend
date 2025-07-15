@@ -3,7 +3,7 @@ from django.views.generic import TemplateView
 from . import views
 from .views import ai_syntax_suggest
 from .views import ai_hint,solved_count,solved_problems_view
-
+from .views import LeaderboardView
 urlpatterns = [
     path('test/', views.test_submit, name='test_submit'),     # ✅ Place specific paths first
     path('submit/', views.submit, name='submit'),
@@ -12,6 +12,7 @@ urlpatterns = [
     path('ai_hint/', ai_hint, name='ai_hint'),
     path('api/solved-count/', solved_count, name='solved-count'),
     path('api/solved/', solved_problems_view),
+    path('api/leaderboard/', LeaderboardView.as_view(), name='leaderboard'),
     # Catch-all for frontend only after all backend views
     re_path(r'^.*$', TemplateView.as_view(template_name="index.html")),
 ]

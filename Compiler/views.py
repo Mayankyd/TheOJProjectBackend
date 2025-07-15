@@ -20,6 +20,13 @@ from .models import Problem, TestCase
 from .serializers import ProblemSerializer
 from django.views.decorators.csrf import csrf_exempt 
 from rest_framework.permissions import AllowAny
+from django.db.models import Count
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import LeaderboardUserSerializer
+from django.contrib.auth.models import User
+from django.db import models
 
 
 # Load environment variables
@@ -314,4 +321,13 @@ def run_code(language, code, test_cases, user=None, problem=None):
     }
 
 
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+class LeaderboardView(APIView):
+    def get(self, request):
+        users = User.objects.annotate(
+            solved_count=Count('submission', filter=models.Q(submission__is_correct=True), distinct=True)
+        ).filter(solved_count__gt=0).order_by('-solved_count', 'username')
 
+        serializer = LeaderboardUserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

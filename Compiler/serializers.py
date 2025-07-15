@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Problem, Example, Constraint, DefaultCode, TestCase
-
+from django.contrib.auth.models import User
+from rest_framework import serializers
 
 class ExampleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +21,12 @@ class DefaultCodeSerializer(serializers.ModelSerializer):
         model = DefaultCode
         fields = ['python', 'java', 'cpp']
 
+class LeaderboardUserSerializer(serializers.ModelSerializer):
+    solved_count = serializers.IntegerField()
 
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'solved_count']
 class ProblemSerializer(serializers.ModelSerializer):
     examples = ExampleSerializer(many=True, read_only=True)
     constraints = ConstraintSerializer(many=True, read_only=True)
