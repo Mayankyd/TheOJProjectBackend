@@ -8,26 +8,56 @@ from pathlib import Path
 import re
 import requests
 from dotenv import load_dotenv
-
+from .models import Submission
+from .models import SolvedProblem
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import authentication_classes, permission_classes
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Problem, TestCase
 from .serializers import ProblemSerializer
 from django.views.decorators.csrf import csrf_exempt 
+from rest_framework.permissions import AllowAny
+
 
 # Load environment variables
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def problem_list(request):
     problems = Problem.objects.all()
     serializer = ProblemSerializer(problems, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def solved_count(request):
+    user = request.user
+    solved_problems = Submission.objects.filter(user=user, is_correct=True).values('problem').distinct().count()
+    return Response({
+        "username": user.username,
+        "solved_count": solved_problems
+    })
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def solved_problems_view(request):
+    
+    solved_ids = SolvedProblem.objects.filter(user=request.user).values_list('problem_id', flat=True)
+    return Response({'solved_ids': list(solved_ids)})
+
+
 
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def submit(request):
     try:
         data = request.data
@@ -39,7 +69,13 @@ def submit(request):
         if not all([language, code, problem_id, mode]):
             return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
 
-        test_cases = TestCase.objects.filter(problem_id=problem_id)
+        # ✅ Fix: Get the problem object
+        try:
+            problem = Problem.objects.get(id=problem_id)
+        except Problem.DoesNotExist:
+            return Response({"error": "Problem not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        test_cases = TestCase.objects.filter(problem=problem)
 
         if not test_cases.exists():
             return Response({"error": "No test cases found for this problem"}, status=status.HTTP_404_NOT_FOUND)
@@ -49,9 +85,20 @@ def submit(request):
         elif mode != "submit":
             return Response({"error": "Invalid mode. Use 'run' or 'submit'."}, status=status.HTTP_400_BAD_REQUEST)
 
-        results = run_code(language, code, test_cases)
-        results['code'] = code  # send code in response if failed
+        # ✅ Pass problem and user correctly
+        results = run_code(language, code, test_cases, user=request.user, problem=problem)
+        results['code'] = code
         results['problem_id'] = problem_id
+
+        # ✅ Track submission if mode is submit
+        if mode == "submit":
+            is_correct = results['status'] == 'Accepted'
+            Submission.objects.update_or_create(
+                user=request.user,
+                problem=problem,
+                defaults={'is_correct': is_correct}
+            )
+
         return Response(results)
 
     except Exception as e:
@@ -163,7 +210,7 @@ def test_submit(request):
     return JsonResponse({'message': 'Compiler API is working!'})
 
 
-def run_code(language, code, test_cases):
+def run_code(language, code, test_cases, user=None, problem=None):
     project_path = Path(settings.BASE_DIR) / "Compiler"
     directories = ["codes", "inputs", "outputs"]
 
@@ -256,10 +303,15 @@ def run_code(language, code, test_cases):
     all_passed = all(r["status"] == "Passed" for r in results)
     final_status = 'Accepted' if all_passed else 'Wrong Answer'
 
+    # ✅ Save solved problem
+    if final_status == "Accepted" and user and problem:
+        SolvedProblem.objects.get_or_create(user=user, problem=problem)
+
     return {
         'status': final_status,
         'details': results,
         'wrong_code': code if final_status == "Wrong Answer" else None
     }
+
 
 

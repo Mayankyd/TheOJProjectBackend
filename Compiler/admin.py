@@ -21,5 +21,5 @@ class TestCaseInline(admin.TabularInline):  # ✅ NEW INLINE
 # Admin config
 @admin.register(Problem)
 class ProblemAdmin(admin.ModelAdmin):
-    list_display = ('title', 'difficulty', 'acceptance', 'solved')
+    list_display = ('title', 'difficulty', 'acceptance')
     inlines = [ExampleInline, ConstraintInline, DefaultCodeInline, TestCaseInline]  # ✅ Include it here

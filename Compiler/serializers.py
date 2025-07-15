@@ -35,7 +35,6 @@ class ProblemSerializer(serializers.ModelSerializer):
             'description',
             'difficulty',
             'acceptance',
-            'solved',
             'examples',
             'constraints',
             'defaultCode',
