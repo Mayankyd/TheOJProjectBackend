@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-p3-gewsb#(a!nq=z#)sh8y!p61_fu_4^rcus)cct3g)z*!x1c2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'ace02a3ccc7c.ngrok-free.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'aaf6172b4dff.ngrok-free.app']
 
 
 # Application definition
@@ -57,8 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-]
-CORS_ALLOW_ALL_ORIGINS = True 
+] 
 
 ROOT_URLCONF = 'Judge.urls'
 
@@ -80,16 +79,14 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ],
-     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.SessionAuthentication'
     ],
      'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173']
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5173","https://aaf6172b4dff.ngrok-free.app",]
 WSGI_APPLICATION = 'Judge.wsgi.application'
 
 # Database
@@ -121,7 +118,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React + Vite server
+    "http://localhost:5173",
+    "https://48ef9f27f693b.ngrok-free.app",# React + Vite server
 ]
 
 
