@@ -1,0 +1,5 @@
+Django
+djangorestframework
+python-dotenv
+requests
+django-cors-headers

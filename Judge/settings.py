@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-p3-gewsb#(a!nq=z#)sh8y!p61_fu_4^rcus)cct3g)z*!x1c2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'ace02a3ccc7c.ngrok-free.app']
 
 
 # Application definition
@@ -146,6 +146,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR.parent, 'frontend', 'dist')]
 
 STATIC_URL = '/assets/'
 STATICFILES_DIRS = [
