@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-p3-gewsb#(a!nq=z#)sh8y!p61_fu_4^rcus)cct3g)z*!x1c2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'aaf6172b4dff.ngrok-free.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '13.232.132.53','oj-project-ruby.vercel.app','compjudge.xyz', 'www.compjudge.xyz']
 
 
 # Application definition
@@ -86,7 +86,15 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5173","https://aaf6172b4dff.ngrok-free.app",]
+CSRF_TRUSTED_ORIGINS = [
+    "https://compjudge.xyz",
+    "https://www.compjudge.xyz",
+    "https://oj-project-ruby.vercel.app",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+]
 WSGI_APPLICATION = 'Judge.wsgi.application'
 
 # Database
@@ -117,12 +125,21 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOW_ALL_ORIGINS = False
+
+CCORS_ALLOWED_ORIGINS = [
+    # 🔒 Production
+    "https://compjudge.xyz",
+    "https://www.compjudge.xyz",
+    "https://oj-project-ruby.vercel.app",
+
+    # 🧪 Local development
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:5173",  # Vite dev server
     "http://localhost:5173",
-    "https://48ef9f27f693b.ngrok-free.app",# React + Vite server
 ]
-
-
+CORS_ALLOW_CREDENTIALS = True
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -146,8 +163,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR.parent, 'frontend', 'dist')]
 
-STATIC_URL = '/assets/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR.parent, 'frontend', 'dist', 'assets'),
-    os.path.join(BASE_DIR.parent, 'frontend', 'dist'), 
+    os.path.join(BASE_DIR.parent, 'frontend', 'dist'),
 ]
